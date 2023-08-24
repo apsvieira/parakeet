@@ -10,7 +10,7 @@ References
 import pandas as pd
 import pytest
 
-from parakeet.stats.cube import _occurrence_matrix, Cube
+from parakeet.stats.cube import _INTERNAL_MARGINAL, Cube, _occurrence_matrix
 
 
 @pytest.fixture
@@ -26,26 +26,24 @@ def sample_data():
 
 
 def testOccurrenceMatrixGeneration(sample_data):
-    margin = "__all__"
-
-    m1 = _occurrence_matrix(sample_data["Model"], margin)
+    m1 = _occurrence_matrix(sample_data["Model"])
     assert m1.shape == (3, 6)
     assert (m1.loc["Chevy"] == [1, 1, 0, 0, 0, 0]).all()
     assert (m1.loc["Ford"] == [0, 0, 1, 1, 1, 1]).all()
-    assert (m1.loc[margin] == [1, 1, 1, 1, 1, 1]).all()
+    assert (m1.loc[_INTERNAL_MARGINAL] == [1, 1, 1, 1, 1, 1]).all()
 
-    m2 = _occurrence_matrix(sample_data["Year"], margin)
+    m2 = _occurrence_matrix(sample_data["Year"])
     assert m2.shape == (3, 6)
     assert (m2.loc[1990] == [1, 1, 1, 1, 0, 0]).all()
     assert (m2.loc[1991] == [0, 0, 0, 0, 1, 1]).all()
-    assert (m2.loc[margin] == [1, 1, 1, 1, 1, 1]).all()
+    assert (m2.loc[_INTERNAL_MARGINAL] == [1, 1, 1, 1, 1, 1]).all()
 
-    m3 = _occurrence_matrix(sample_data["Color"], margin)
+    m3 = _occurrence_matrix(sample_data["Color"])
     assert m3.shape == (4, 6)
     assert (m3.loc["Red"] == [1, 0, 0, 0, 1, 0]).all()
     assert (m3.loc["Blue"] == [0, 1, 0, 1, 0, 1]).all()
     assert (m3.loc["Green"] == [0, 0, 1, 0, 0, 0]).all()
-    assert (m3.loc[margin] == [1, 1, 1, 1, 1, 1]).all()
+    assert (m3.loc[_INTERNAL_MARGINAL] == [1, 1, 1, 1, 1, 1]).all()
 
 
 def testCubeCreation(sample_data):
@@ -57,9 +55,11 @@ def testCubeCreation(sample_data):
     assert (cube.cube.loc[1990, "Blue", "Ford"] == [0, 0, 0, 1, 0, 0]).all()
     assert (cube.cube.loc[1991, "Red", "Ford"] == [0, 0, 0, 0, 1, 0]).all()
     assert (cube.cube.loc[1991, "Blue", "Ford"] == [0, 0, 0, 0, 0, 1]).all()
-    assert (cube.cube.loc[1990, cube._marginal, "Chevy"] == [1, 1, 0, 0, 0, 0]).all()
-    assert (cube.cube.loc[1990, cube._marginal, "Ford"] == [0, 0, 1, 1, 0, 0]).all()
-    assert (cube.cube.loc[1991, cube._marginal, "Ford"] == [0, 0, 0, 0, 1, 1]).all()
+    assert (
+        cube.cube.loc[1990, _INTERNAL_MARGINAL, "Chevy"] == [1, 1, 0, 0, 0, 0]
+    ).all()
+    assert (cube.cube.loc[1990, _INTERNAL_MARGINAL, "Ford"] == [0, 0, 1, 1, 0, 0]).all()
+    assert (cube.cube.loc[1991, _INTERNAL_MARGINAL, "Ford"] == [0, 0, 0, 0, 1, 1]).all()
     assert cube.cube.shape == (3 * 3 * 4, 6)
 
     sales = cube(sample_data[["Sale"]])

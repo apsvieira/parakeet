@@ -1,8 +1,11 @@
+from itertools import product
 from typing import Any
-from scipy.linalg import khatri_rao
+
 import numpy as np
 import pandas as pd
-from itertools import product
+from scipy.linalg import khatri_rao
+
+_INTERNAL_MARGINAL = "__all__"
 
 
 class Cube:
@@ -31,13 +34,10 @@ class Cube:
         """
         self.dims = dims
         self.agg = agg
-        self._marginal = "__all__"
 
         # Calculate the cube operator from input data dimensions
         cube = None
-        occurrence_matrices = {
-            dim: _occurrence_matrix(data[dim], self._marginal) for dim in dims
-        }
+        occurrence_matrices = {dim: _occurrence_matrix(data[dim]) for dim in dims}
         dims = self.dims[::-1]
         for dim in dims:
             m = occurrence_matrices[dim]
@@ -52,15 +52,13 @@ class Cube:
         return self.cube @ data
 
 
-def _occurrence_matrix(s: pd.Series, _marginal: str) -> pd.DataFrame:
+def _occurrence_matrix(s: pd.Series) -> pd.DataFrame:
     """Calculate the occurrence matrix for a dimension.
 
     Parameters
     ----------
     s : pd.Series
         Input data series.
-    _marginal : str
-        Representation of the marginal dimension.
 
     Returns
     -------
@@ -69,7 +67,7 @@ def _occurrence_matrix(s: pd.Series, _marginal: str) -> pd.DataFrame:
     """
 
     m = pd.get_dummies(s, drop_first=False)
-    m[_marginal] = 1
+    m[_INTERNAL_MARGINAL] = 1
     m = m.astype(int).T
     m.index.name = s.name
     return m
