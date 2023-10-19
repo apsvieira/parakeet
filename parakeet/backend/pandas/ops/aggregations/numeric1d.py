@@ -1,4 +1,4 @@
-from parakeet.core.ops.aggregations import Count, Numeric1dFn, _Numeric1d
+from parakeet.core.ops.aggregations import Numeric1dFn, _Numeric1d
 
 
 class PandasNumeric1d(_Numeric1d):

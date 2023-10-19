@@ -1,4 +1,5 @@
-from typing import Dict, List, Optional
+from collections import defaultdict
+from typing import Dict, List, Optional, Set
 
 from pandas import DataFrame
 from pandas.core.groupby.generic import DataFrameGroupBy
@@ -77,12 +78,12 @@ def _dtype_from_pandas(dtype: str) -> DType:
         raise ValueError(f"Unknown dtype {dtype}")
 
 
-def _to_pandas_aggregations(agg: List[Fn]) -> Dict[str, callable]:
-    aggregations: Dict[str, callable] = {}
+def _to_pandas_aggregations(agg: List[Fn]) -> Dict[str, Set[callable]]:
+    aggregations: Dict[str, Set[callable]] = defaultdict(set)
     for a in agg:
         if a.name in aggregations:
             raise ValueError(f"Duplicated aggregation {a.name()}.")
 
-        aggregations[a.input_column] = a.fn
+        aggregations[a.input_column].add(a.fn)
 
     return aggregations
