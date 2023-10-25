@@ -32,7 +32,7 @@ class LambdaOp(_Op):
     def transform(self, dataset: Dataset) -> Dataset:
         return self.fn(dataset, self._input_column, self._output_column)
 
-    def output_schema(self, input_schema: Dataset) -> Dataset:
+    def _output_schema(self, input_schema: Dataset) -> Dataset:
         schema = input_schema[:]
         schema[self._output_column] = self._output_column_dtype
         return schema

@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 from typing import List
 
 from parakeet.core.dataset import Dataset, Field, Fn, Schema
@@ -16,9 +15,13 @@ class Agg(Op):
         self.agg = agg
 
     def transform(self, dataset: Dataset) -> Dataset:
-        return dataset.agg(self.agg)
+        by = []
+        if hasattr(dataset, "groups"):
+            by = getattr(dataset, "groups")
 
-    def output_schema(self, input_schema: Schema, by: List[str]) -> Schema:
+        return dataset.agg(self._output_schema(dataset.schema, by))
+
+    def _output_schema(self, input_schema: Schema, by: List[str]) -> Schema:
         if len(by) > 0:
             cols = [f.name for f in input_schema]
             not_contained = [c for c in by if c not in cols]
@@ -32,7 +35,4 @@ class Agg(Op):
             raise ValueError(f"Invalid aggregation functions: {invalid}")
 
         by_fields = [f for f in input_schema if f.name in by]
-        agg_fields = [
-            Field(name=fn.name, dtype=fn.output_dtype(input_schema)) for fn in self.agg
-        ]
-        return by_fields + agg_fields
+        return by_fields + self.agg

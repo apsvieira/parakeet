@@ -1,11 +1,10 @@
 from enum import StrEnum, auto
-from typing import List
 
 from parakeet.core.dataset import DType, Fn, Schema
 
 
 class Numeric1dFn(StrEnum):
-    """Support 1-dimensional nueric aggregation functions.
+    """Support 1-dimensional numeric aggregation functions.
 
     Quantile is not supported via this class, as it requires a parameter.
     """
@@ -30,26 +29,34 @@ class _Numeric1d(Fn):
     column as input and return a single column as output.
     """
 
-    def __init__(self, name: str, input_col: str, op: Numeric1dFn) -> None:
-        self._name = name
+    def __init__(self, input_col: str, op: Numeric1dFn) -> None:
         self._input_col = input_col
         self.op = op
 
     @property
     def name(self) -> str:
-        return self._name
+        return f"{self.op.name.upper()}({self._input_col})"
 
     @property
     def input_column(self) -> str:
         return self._input_col
 
     def valid(self, input_schema: Schema) -> bool:
-        contained = self._input_col in [f.name for f in input_schema]
-        supported_type = input_schema[self._input_col].dtype in {
+        idx = _find(input_schema, self._input_col)
+        supported_type = input_schema[idx].dtype in {
             DType.INT64,
             DType.FLOAT64,
         }
-        return contained and supported_type
+        return idx >= 0 and supported_type
 
     def output_dtype(self, input_schema: Schema) -> DType:
-        return input_schema[self._input_col].dtype
+        idx = _find(input_schema, self._input_col)
+        return input_schema[idx].dtype
+
+
+def _find(iterable, value) -> int:
+    """Find the index of the first occurence of value in iterable."""
+    for i, v in enumerate(iterable):
+        if v.name == value:
+            return i
+    return -1

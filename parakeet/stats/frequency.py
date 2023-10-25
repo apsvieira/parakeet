@@ -23,7 +23,6 @@ class Result:
         data = data.reset_index(drop=True)
         data["Cumulative Frequency"] = data["Frequency"].cumsum()
         data["Cumulative Percentage"] = data["Percentage"].cumsum()
-        print(data)
 
         data = data.style.format(
             {

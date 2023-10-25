@@ -12,7 +12,7 @@ class Op(ABC):
         """Transform the given dataset."""
 
     @abstractmethod
-    def output_schema(self, input_schema: Schema) -> Schema:
+    def _output_schema(self, input_schema: Schema) -> Schema:
         """Return the schema of the output dataset."""
 
 
@@ -28,8 +28,8 @@ class Seq(Op):
             dataset = op.transform(dataset)
         return dataset
 
-    def output_schema(self, input_schema: Schema) -> Schema:
+    def _output_schema(self, input_schema: Schema) -> Schema:
         schema = input_schema[:]
         for op in self._ops:
-            schema = op.output_schema(schema)
+            schema = op._output_schema(schema)
         return schema

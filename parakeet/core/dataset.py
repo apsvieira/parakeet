@@ -59,6 +59,11 @@ class Fn(ABC):
         """Output data type returned by the function."""
 
 
+DesiredSchema = List[Fn | Field]
+"""Describes the desired schema of a dataset, allowing some fields to be
+   created with aggregations or transformations."""
+
+
 class Dataset(ABC):
     @property
     @abstractmethod
@@ -79,5 +84,5 @@ class Dataset(ABC):
         """Group by the given columns."""
 
     @abstractmethod
-    def agg(self, agg: List[Fn]) -> "Dataset":
+    def agg(self, desired: DesiredSchema) -> "Dataset":
         """Aggregate the dataset."""

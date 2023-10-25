@@ -22,5 +22,5 @@ class GroupBy(Op):
 
         return dataset.groupby(self.by)
 
-    def output_schema(self, input_schema: Schema) -> Schema:
+    def _output_schema(self, input_schema: Schema) -> Schema:
         return input_schema

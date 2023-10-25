@@ -1,10 +1,12 @@
-from collections import defaultdict
-from typing import Dict, List, Optional, Set
+from typing import List, Optional
 
-from pandas import DataFrame
+from pandas import DataFrame, NamedAgg
 from pandas.core.groupby.generic import DataFrameGroupBy
 
-from parakeet.core.dataset import Dataset, DType, Field, Fn, Schema
+from parakeet.core.dataset import Dataset, DesiredSchema, DType, Field, Fn, Schema
+
+# TODO: We can later ensure that the desired schema is being followed
+# by checking the schema of the resulting dataset versus the desired.
 
 
 class PandasDataset(Dataset):
@@ -31,26 +33,33 @@ class PandasDataset(Dataset):
         return self._time
 
     def groupby(self, by: List[str]) -> "Dataset":
-        return PandasGroupByDataset(self._data.groupby(by), self._time)
+        return PandasGroupByDataset(self._data.groupby(by), self._time, self.schema)
 
-    def agg(self, agg: List[Fn]) -> "Dataset":
-        aggregations = _to_pandas_aggregations(agg)
-        return PandasDataset(self._data.agg(aggregations), self._time)
+    def agg(self, desired: DesiredSchema) -> "Dataset":
+        aggregations = _to_pandas_aggregations(desired)
+        return PandasDataset(self._data.agg(**aggregations), self._time)
 
 
 class PandasGroupByDataset(Dataset):
-    def __init__(self, data: DataFrameGroupBy, time: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        data: DataFrameGroupBy,
+        time: str,
+        schema: Schema,
+    ) -> None:
         self._data = data
         self._time = time
+        self._schema = schema
+        self.groups: List[str] = list(self._data.keys)
 
     @property
     def data(self):
         return self._data
 
+    @property
     def schema(self) -> Schema:
-        return [
-            Field(c.name, _dtype_from_pandas(c.dtype.name)) for c in self.data.dtypes
-        ]
+        # TODO: should we mark the groupby columns as aggregated?
+        return self._schema
 
     def shape(self):
         return self._data.shape
@@ -62,9 +71,9 @@ class PandasGroupByDataset(Dataset):
     def groupby(self, _: List[str]) -> "Dataset":
         raise NotImplementedError("groupby is not supported for grouped dataset.")
 
-    def agg(self, agg: List[Fn]) -> "Dataset":
-        aggregations = _to_pandas_aggregations(agg)
-        return PandasDataset(self._data.agg(aggregations), self._time)
+    def agg(self, desired: DesiredSchema) -> "Dataset":
+        aggregations = _to_pandas_aggregations(desired)
+        return PandasDataset(self._data.agg(**aggregations), self._time)
 
 
 def _dtype_from_pandas(dtype: str) -> DType:
@@ -78,12 +87,9 @@ def _dtype_from_pandas(dtype: str) -> DType:
         raise ValueError(f"Unknown dtype {dtype}")
 
 
-def _to_pandas_aggregations(agg: List[Fn]) -> Dict[str, Set[callable]]:
-    aggregations: Dict[str, Set[callable]] = defaultdict(set)
-    for a in agg:
-        if a.name in aggregations:
-            raise ValueError(f"Duplicated aggregation {a.name()}.")
-
-        aggregations[a.input_column].add(a.fn)
-
-    return aggregations
+def _to_pandas_aggregations(sch: Schema) -> List[NamedAgg]:
+    return {
+        f.name: NamedAgg(column=f.input_column, aggfunc=f.fn)
+        for f in sch
+        if isinstance(f, Fn)
+    }
