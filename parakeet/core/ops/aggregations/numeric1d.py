@@ -3,11 +3,8 @@ from enum import StrEnum, auto
 from parakeet.core.dataset import DType, Fn, Schema
 
 
-class Numeric1dFn(StrEnum):
-    """Support 1-dimensional numeric aggregation functions.
-
-    Quantile is not supported via this class, as it requires a parameter.
-    """
+class Numeric1dAggFn(StrEnum):
+    """Support 1-dimensional numeric aggregation functions with no arguments."""
 
     COUNT = auto()
     CUMSUM = auto()
@@ -22,14 +19,14 @@ class Numeric1dFn(StrEnum):
     VAR = auto()
 
 
-class _Numeric1d(Fn):
+class _Numeric1dAgg(Fn):
     """Base class for numeric 1d aggregation functions.
 
     This class is used to represent aggregation functions that take a single
     column as input and return a single column as output.
     """
 
-    def __init__(self, input_col: str, op: Numeric1dFn) -> None:
+    def __init__(self, input_col: str, op: Numeric1dAggFn) -> None:
         self._input_col = input_col
         self.op = op
 

@@ -1,1 +1,1 @@
-from .numeric1d import Numeric1dFn, _Numeric1d
+from .numeric1d import Numeric1dAggFn, _Numeric1dAgg
